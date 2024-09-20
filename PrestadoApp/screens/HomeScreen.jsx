@@ -1,12 +1,16 @@
 import { View, Text } from "react-native";
 import React from "react";
+import { useAuthContext } from "../context/AuthContext";
+import AddItemScreen from "./AddItemScreen";
 
 const HomeScreen = () => {
+  const { user } = useAuthContext();
   return (
-    <View className="flex-1 items-center justify-center bg-black">
+    <View className="flex-1 justify-center items-center bg-black">
       <Text className="text-white text-2xl font-bold">
-        Bienvenido a Prestado App Mate!
+        Bienvenido {user.email}!
       </Text>
+      <AddItemScreen/>
     </View>
   );
 };
