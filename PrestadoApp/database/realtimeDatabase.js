@@ -1,1 +1,0 @@
-export const baseURL = 'https://prestado-17d13-default-rtdb.firebaseio.com/'
