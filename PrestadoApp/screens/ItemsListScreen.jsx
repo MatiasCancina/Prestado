@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, FlatList, TextInput } from "react-native";
+import { View, Text, ActivityIndicator, FlatList, TextInput, Switch } from "react-native";
 import { db } from "../firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import ItemCard from "../components/ItemCard";
@@ -8,6 +8,9 @@ const ItemsListScreen = () => {
   const [itemsList, setItemsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
+  const [ratingMin, setRatingMin] = useState('');
+  const [ratingMax, setRatingMax] = useState('');
+  const [availabilityFilter, setAvailabilityFilter] = useState(false);
 
   useEffect(() => {
     const getItemsList = async () => {
@@ -43,6 +46,7 @@ const ItemsListScreen = () => {
     };
     getItemsList();
   }, []);
+
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -51,29 +55,63 @@ const ItemsListScreen = () => {
     );
   }
 
-  // Filtrar items según el texto de búsqueda
   const filteredItems = itemsList.filter((item) => {
     const searchTextLower = searchText.toLowerCase();
-    return (
+    const matchesSearchText =
       item.name.toLowerCase().includes(searchTextLower) ||
-      item.category.toLowerCase().includes(searchTextLower) ||
-      (item.location &&
-        `${item.location.latitude}, ${item.location.longitude}`.includes(
-          searchTextLower
-        ))
-    );
+      item.category.toLowerCase().includes(searchTextLower);
+
+    const matchesRating =
+      item.rating >= Number(ratingMin) && item.rating <= Number(ratingMax);
+
+    const matchesAvailability = availabilityFilter ? item.availability : true;
+
+    return matchesSearchText && matchesRating && matchesAvailability;
   });
 
   return (
     <View className="flex-1 bg-gray-100 p-4">
-      <Text className="text-2xl font-bold mb-4">Items List</Text>
 
-      <TextInput
-        value={searchText}
-        onChangeText={setSearchText}
-        placeholder="Search by name, category or location"
-        className="border-b p-2 mb-4"
-      />
+      <Text className="font-bold">Filter by Rating</Text>
+      <View className="mb-4 flex flex-row justify-between">
+        <View className="flex-row items-center mb-2">
+          <Text className="mr-2">Min Rating:</Text>
+          <TextInput
+            value={String(ratingMin)}
+            onChangeText={(value) => setRatingMin(value)}
+            keyboardType="numeric"
+            className="border-b p-1 w-16 text-center"
+            placeholder="1"
+          />
+        </View>
+
+        <View className="flex-row items-center">
+          <Text className="mr-2">Max Rating:</Text>
+          <TextInput
+            value={String(ratingMax)}
+            onChangeText={(value) => setRatingMax(value)}
+            keyboardType="numeric"
+            className="border-b p-1 w-16 text-center"
+            placeholder="5"
+          />
+        </View>
+      </View>
+      <View className="mb-4 flex flex-row justify-between">
+        <TextInput
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="Search by name or category"
+          className="border-b p-2 mb-4"
+        />
+
+        <View className="flex-row items-center mb-4">
+          <Text className="mr-2">Available Only:</Text>
+          <Switch
+            value={availabilityFilter}
+            onValueChange={setAvailabilityFilter}
+          />
+        </View>
+      </View>
 
       {filteredItems.length > 0 ? (
         <FlatList
