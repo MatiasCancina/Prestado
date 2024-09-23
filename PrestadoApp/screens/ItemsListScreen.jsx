@@ -8,8 +8,8 @@ const ItemsListScreen = () => {
   const [itemsList, setItemsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
-  const [ratingMin, setRatingMin] = useState('');
-  const [ratingMax, setRatingMax] = useState('');
+  const [ratingMin, setRatingMin] = useState(1);
+  const [ratingMax, setRatingMax] = useState(5);
   const [availabilityFilter, setAvailabilityFilter] = useState(false);
 
   useEffect(() => {
