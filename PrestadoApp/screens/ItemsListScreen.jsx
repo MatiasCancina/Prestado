@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, FlatList, TextInput, Switch } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  FlatList,
+  TextInput,
+  Switch,
+} from "react-native";
 import { db } from "../firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import ItemCard from "../components/ItemCard";
 
-const ItemsListScreen = () => {
+const ItemsListScreen = ({ navigation }) => {
   const [itemsList, setItemsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -26,6 +33,7 @@ const ItemsListScreen = () => {
             location,
             name,
             rating,
+            lenderId,
           } = doc.data();
           docs.push({
             id: doc.id,
@@ -35,6 +43,7 @@ const ItemsListScreen = () => {
             location,
             name,
             rating,
+            lenderId,
           });
         });
         setItemsList(docs);
@@ -71,7 +80,6 @@ const ItemsListScreen = () => {
 
   return (
     <View className="flex-1 bg-gray-100 p-4">
-
       <Text className="font-bold">Filter by Rating</Text>
       <View className="mb-4 flex flex-row justify-between">
         <View className="flex-row items-center mb-2">
@@ -116,7 +124,9 @@ const ItemsListScreen = () => {
       {filteredItems.length > 0 ? (
         <FlatList
           data={filteredItems}
-          renderItem={({ item }) => <ItemCard item={item} />}
+          renderItem={({ item }) => (
+            <ItemCard item={item} navigation={navigation} />
+          )}
           keyExtractor={(item) => item.id}
           className="w-full"
         />
