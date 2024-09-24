@@ -32,7 +32,7 @@ const BottomTabNavigator = () => {
                 }}
             />
             <Tab.Screen
-                name="ItemList"
+                name="ItemsList"
                 component={ItemsListScreen}
                 options={{
                     tabBarIcon: ({ focused }) => {
