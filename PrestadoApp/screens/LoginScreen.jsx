@@ -1,10 +1,5 @@
-import { View, Text, TextInput, Button } from "react-native";
+import { View, Text, TextInput } from "react-native";
 import React, { useState } from "react";
-import { auth } from "../firebaseConfig"; // Asegúrate de la ruta correcta
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
 import { TouchableOpacity } from "react-native";
 import { useAuthContext } from "../context/AuthContext";
 
