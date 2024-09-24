@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, Alert } from "react-native";
 import { db } from "../firebaseConfig";
 import { addDoc, collection } from "firebase/firestore";
+import { useAuthContext } from "../context/AuthContext";
 
 const AddItemForm = ({ navigation }) => {
   const [name, setName] = useState("");
@@ -10,13 +11,12 @@ const AddItemForm = ({ navigation }) => {
   const [location, setLocation] = useState({ latitude: "", longitude: "" });
   const [availability, setAvailability] = useState(true);
   const [rating, setRating] = useState("");
+  const { user } = useAuthContext();
 
   const handleSubmit = async () => {
     try {
-      // Referencia a la colección 'items' en Firestore
       const itemsRef = collection(db, "items");
 
-      // Agrega el nuevo ítem a Firestore
       await addDoc(itemsRef, {
         name,
         category,
@@ -27,6 +27,8 @@ const AddItemForm = ({ navigation }) => {
         },
         availability,
         rating: parseFloat(rating),
+        lenderId: user.uid, //id del prestador
+        createdAt: new Date(),
       });
 
       Alert.alert("Success", "Item added successfully!");
@@ -38,7 +40,9 @@ const AddItemForm = ({ navigation }) => {
 
   return (
     <View className="p-4 bg-gray-200 w-screen mt-3">
-      <Text className="text-2xl font-semibold text-center mb-4">Add New Item</Text>
+      <Text className="text-2xl font-semibold text-center mb-4">
+        Add New Item
+      </Text>
       <TextInput
         className="h-10 border-b border-gray-400 mb-3 px-2"
         placeholder="Name"
