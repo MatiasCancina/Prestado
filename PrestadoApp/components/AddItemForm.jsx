@@ -32,6 +32,7 @@ const AddItemForm = ({ navigation }) => {
       });
 
       Alert.alert("Success", "Item added successfully!");
+      
       navigation.navigate("ItemsList");
     } catch (error) {
       console.log("Error", error.message);
