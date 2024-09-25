@@ -10,6 +10,7 @@ import {
 import { db } from "../firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import ItemCard from "../components/ItemCard";
+import { useIsFocused } from "@react-navigation/native";
 
 const ItemsListScreen = ({ navigation }) => {
   const [itemsList, setItemsList] = useState([]);
@@ -18,9 +19,10 @@ const ItemsListScreen = ({ navigation }) => {
   const [ratingMin, setRatingMin] = useState(1);
   const [ratingMax, setRatingMax] = useState(5);
   const [availabilityFilter, setAvailabilityFilter] = useState(false);
+  const isFocused = useIsFocused(); 
 
-  useEffect(() => {
     const getItemsList = async () => {
+      setLoading(true)
       try {
         const querySnapshot = await getDocs(collection(db, "items"));
         const docs = [];
@@ -53,8 +55,12 @@ const ItemsListScreen = ({ navigation }) => {
         setLoading(false);
       }
     };
-    getItemsList();
-  }, []);
+
+  useEffect(() => {
+    if (isFocused) {
+      getItemsList();
+    }
+  }, [isFocused]);  
 
   if (loading) {
     return (
