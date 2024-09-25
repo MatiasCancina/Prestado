@@ -17,9 +17,11 @@ const RequestLoanScreen = ({ route, navigation }) => {
         status: "pending",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        startDate: null,
+        endDate: null  
       });
       alert("Solicitud de préstamo enviada");
-      navigation.navigate("ItemsList");
+      navigation.navigate("Loans");
     } catch (error) {
       console.error("Error requesting loan:", error);
     }
