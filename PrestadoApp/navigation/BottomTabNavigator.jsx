@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import HomeScreen from "../screens/HomeScreen";
 import ItemsStackNavigator from "./ItemsStackNavigator";
+import LoanManagementScreen from "../screens/LoanManagementScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -52,6 +53,24 @@ const BottomTabNavigator = () => {
           },
         }}
       />
+            <Tab.Screen
+        name="Loans"
+        component={LoanManagementScreen}
+        options={{
+          tabBarIcon: ({ focused }) => {
+            return (
+              <View>
+                <FontAwesome5
+                  name="clipboard-list"
+                  size={24}
+                  color={focused ? "blue" : "black"}
+                />
+              </View>
+            );
+          },
+        }}
+      />
+
     </Tab.Navigator>
   );
 };
