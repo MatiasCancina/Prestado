@@ -11,20 +11,21 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { useAuthContext } from "../context/AuthContext";
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 
 const LoanManagementScreen = () => {
-  const { user } = useAuthContext();
+  const { user } = useAuthContext();  // Obtener el usuario autenticado
   const [loans, setLoans] = useState([]);
   const isFocused = useIsFocused();
   const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();  // Hook para la navegación
 
   const fetchLoans = async () => {
     setLoading(true);
     try {
       const q = query(
         collection(db, "loans"),
-        where("borrowerId", "==", user.uid) // Préstamos donde es prestatario
+        where("borrowerId", "==", user.uid)  // Préstamos donde es prestatario
       );
 
       const loansSnapshot = await getDocs(q);
@@ -36,7 +37,7 @@ const LoanManagementScreen = () => {
           startDate: data.startDate ? data.startDate.toDate() : null,
           endDate: data.endDate ? data.endDate.toDate() : null,
         };
-      }); 
+      });
 
       setLoans(fetchedLoans);
     } catch (error) {
@@ -46,7 +47,6 @@ const LoanManagementScreen = () => {
     }
   };
 
-  // Función para marcar el inicio del préstamo
   const markLoanStart = async (loanId) => {
     try {
       const loanDoc = doc(db, "loans", loanId);
@@ -69,30 +69,37 @@ const LoanManagementScreen = () => {
       console.error("Error al iniciar el préstamo:", error);
     }
   };
-    
-  //Funcion para marcar fin de prestamo 
-  const markLoanEnd = async (loanId) => {
+
+  const markLoanEnd = async (loan) => {
     try {
-      const loanDoc = doc(db, "loans", loanId);
+      const loanDoc = doc(db, "loans", loan.id);
       const endDate = new Date(); 
       await updateDoc(loanDoc, {
         status: "completed",
         endDate: endDate, 
         updatedAt: serverTimestamp(),
       });
-
+  
       setLoans((prevLoans) =>
-        prevLoans.map((loan) =>
-          loan.id === loanId
-            ? { ...loan, status: "completed", endDate: endDate }
-            : loan
+        prevLoans.map((l) =>
+          l.id === loan.id
+            ? { ...l, status: "completed", endDate: endDate }
+            : l
         )
       );
       alert("Préstamo finalizado");
+  
+      // Redirigir al formulario de reseñas después de completar el préstamo
+      navigation.navigate('ReviewForm', {
+        loanId: loan.id,         // ID del préstamo
+        lenderId: loan.lenderId, // ID del prestador
+        reviewerId: user.uid,    // Prestatario es el que deja la reseña
+      });
     } catch (error) {
       console.error("Error al finalizar el préstamo:", error);
     }
   };
+  
 
   useEffect(() => {
     if (isFocused) {
@@ -108,8 +115,6 @@ const LoanManagementScreen = () => {
     );
   }
 
-  console.log(loans);
-
   return (
     <View>
       <Text className="font-semibold text-xl mb-5">Gestión de Préstamos</Text>
@@ -121,13 +126,21 @@ const LoanManagementScreen = () => {
             <Text>Ítem: {loan.itemId}</Text>
             <Text>Estado: {loan.status}</Text>
             <Text>
-              Fecha de inicio:{" "}
+              Fecha de inicio:
               {loan.startDate ? loan.startDate.toString() : "No iniciado"}
             </Text>
             <Text>
-              Fecha de fin:{" "}
+              Fecha de fin:
               {loan.endDate ? loan.endDate.toString() : "No finalizado"}
             </Text>
+
+            {/* Botón para ver el perfil del prestador */}
+            <Button
+              title="Ver perfil del prestador"
+              onPress={() =>
+                navigation.navigate('UserProfile', { userId: loan.lenderId })
+              }
+            />
 
             {loan.status === "pending" && (
               <Button
@@ -139,7 +152,7 @@ const LoanManagementScreen = () => {
             {loan.status === "active" && (
               <Button
                 title="Finalizar Préstamo"
-                onPress={() => markLoanEnd(loan.id)}
+                onPress={() => markLoanEnd(loan)}
               />
             )}
           </View>
