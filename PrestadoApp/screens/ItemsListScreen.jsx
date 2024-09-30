@@ -36,6 +36,7 @@ const ItemsListScreen = ({ navigation }) => {
             name,
             rating,
             lenderId,
+            imageUrl
           } = doc.data();
           docs.push({
             id: doc.id,
@@ -46,6 +47,7 @@ const ItemsListScreen = ({ navigation }) => {
             name,
             rating,
             lenderId,
+            imageUrl
           });
         });
         setItemsList(docs);

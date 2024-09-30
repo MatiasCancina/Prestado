@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ItemsListScreen from "../screens/ItemsListScreen";
 import RequestLoanScreen from "../screens/RequestLoanScreen";
 import LoanManagementScreen from "../screens/LoanManagementScreen";
+import AddItemScreen from "../screens/AddItemScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -13,6 +14,7 @@ const ItemsStackNavigator = () => {
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen name="ItemsList" component={ItemsListScreen} />
+      <Stack.Screen name="AddItem" component={AddItemScreen} />
       <Stack.Screen name="RequestLoan" component={RequestLoanScreen} />
       <Stack.Screen name="LoanManagement" component={LoanManagementScreen} />
     </Stack.Navigator>
