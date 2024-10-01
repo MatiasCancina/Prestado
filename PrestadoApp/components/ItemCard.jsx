@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const ItemCard = ({ item, navigation }) => {
   return (
@@ -13,7 +13,7 @@ const ItemCard = ({ item, navigation }) => {
         })
       }
     >
-      <Image source={{ uri: item.imageUrl }} className='w-1/3 h-full' />
+      <Image source={{ uri: item.imageUrl }} className="w-1/3 h-full" />
       <View style={styles.infoContainer}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.category}>{item.category}</Text>
@@ -21,7 +21,12 @@ const ItemCard = ({ item, navigation }) => {
           <Feather name="star" size={16} color="#FFD700" />
           <Text style={styles.rating}>{item.rating.toFixed(1)}</Text>
         </View>
-        <Text style={styles.availability}>
+        <Text
+          style={[
+            styles.availability,
+            { color: item.availability ? "#6C63FF" : "#FF4C4C" },
+          ]}
+        >
           {item.availability ? "Available" : "Not Available"}
         </Text>
       </View>
