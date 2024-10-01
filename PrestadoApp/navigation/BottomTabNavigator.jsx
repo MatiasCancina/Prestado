@@ -51,6 +51,7 @@ const BottomTabNavigator = () => {
               </View>
             );
           },
+          headerShown: false
         }}
       />
             <Tab.Screen
