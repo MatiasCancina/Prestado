@@ -6,7 +6,9 @@ import {
   FlatList,
   TextInput,
   Switch,
+  Dimensions,
 } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 import { db } from "../firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import ItemCard from "../components/ItemCard";
@@ -19,50 +21,50 @@ const ItemsListScreen = ({ navigation }) => {
   const [ratingMin, setRatingMin] = useState(1);
   const [ratingMax, setRatingMax] = useState(5);
   const [availabilityFilter, setAvailabilityFilter] = useState(false);
-  const isFocused = useIsFocused(); 
+  const isFocused = useIsFocused();
 
-    const getItemsList = async () => {
-      setLoading(true)
-      try {
-        const querySnapshot = await getDocs(collection(db, "items"));
-        const docs = [];
+  const getItemsList = async () => {
+    setLoading(true);
+    try {
+      const querySnapshot = await getDocs(collection(db, "items"));
+      const docs = [];
 
-        querySnapshot.forEach((doc) => {
-          const {
-            availability,
-            category,
-            description,
-            location,
-            name,
-            rating,
-            lenderId,
-            imageUrl
-          } = doc.data();
-          docs.push({
-            id: doc.id,
-            availability,
-            category,
-            description,
-            location,
-            name,
-            rating,
-            lenderId,
-            imageUrl
-          });
+      querySnapshot.forEach((doc) => {
+        const {
+          availability,
+          category,
+          description,
+          location,
+          name,
+          rating,
+          lenderId,
+          imageUrl,
+        } = doc.data();
+        docs.push({
+          id: doc.id,
+          availability,
+          category,
+          description,
+          location,
+          name,
+          rating,
+          lenderId,
+          imageUrl,
         });
-        setItemsList(docs);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      });
+      setItemsList(docs);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isFocused) {
       getItemsList();
     }
-  }, [isFocused]);  
+  }, [isFocused]);
 
   if (loading) {
     return (
@@ -87,62 +89,85 @@ const ItemsListScreen = ({ navigation }) => {
   });
 
   return (
-    <View className="flex-1 bg-gray-100 p-4">
-      <Text className="font-bold">Filter by Rating</Text>
-      <View className="mb-4 flex flex-row justify-between">
-        <View className="flex-row items-center mb-2">
-          <Text className="mr-2">Min Rating:</Text>
-          <TextInput
-            value={String(ratingMin)}
-            onChangeText={(value) => setRatingMin(value)}
-            keyboardType="numeric"
-            className="border-b p-1 w-16 text-center"
-            placeholder="1"
-          />
-        </View>
+    <View className="flex-1 bg-gray-100">
+      {/* Filtros */}
+      <View className="p-4">
+        <Text className="font-bold">Filter by Rating</Text>
+        <View className="mb-4 flex flex-row justify-between">
+          <View className="flex-row items-center mb-2">
+            <Text className="mr-2">Min Rating:</Text>
+            <TextInput
+              value={String(ratingMin)}
+              onChangeText={(value) => setRatingMin(value)}
+              keyboardType="numeric"
+              className="border-b p-1 w-16 text-center"
+              placeholder="1"
+            />
+          </View>
 
-        <View className="flex-row items-center">
-          <Text className="mr-2">Max Rating:</Text>
+          <View className="flex-row items-center">
+            <Text className="mr-2">Max Rating:</Text>
+            <TextInput
+              value={String(ratingMax)}
+              onChangeText={(value) => setRatingMax(value)}
+              keyboardType="numeric"
+              className="border-b p-1 w-16 text-center"
+              placeholder="5"
+            />
+          </View>
+        </View>
+        <View className="mb-4 flex flex-row justify-between">
           <TextInput
-            value={String(ratingMax)}
-            onChangeText={(value) => setRatingMax(value)}
-            keyboardType="numeric"
-            className="border-b p-1 w-16 text-center"
-            placeholder="5"
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholder="Search by name or category"
+            className="border-b p-2 mb-4"
           />
+
+          <View className="flex-row items-center mb-4">
+            <Text className="mr-2">Available Only:</Text>
+            <Switch
+              value={availabilityFilter}
+              onValueChange={setAvailabilityFilter}
+            />
+          </View>
         </View>
       </View>
-      <View className="mb-4 flex flex-row justify-between">
-        <TextInput
-          value={searchText}
-          onChangeText={setSearchText}
-          placeholder="Search by name or category"
-          className="border-b p-2 mb-4"
-        />
 
-        <View className="flex-row items-center mb-4">
-          <Text className="mr-2">Available Only:</Text>
-          <Switch
-            value={availabilityFilter}
-            onValueChange={setAvailabilityFilter}
-          />
-        </View>
+      {/* Mapa */}
+      <View style={{ height: 300, marginBottom: 20 }}>
+        <MapView
+          style={{ flex: 1 }}
+          initialRegion={{
+            latitude: itemsList[0]?.location?.latitude || 0,
+            longitude: itemsList[0]?.location?.longitude || 0,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
+        >
+          {filteredItems.map((item) => (
+            <Marker
+              key={item.id}
+              coordinate={{
+                latitude: item.location.latitude,
+                longitude: item.location.longitude,
+              }}
+              title={item.name}
+              description={item.description}
+            />
+          ))}
+        </MapView>
       </View>
 
-      {filteredItems.length > 0 ? (
-        <FlatList
-          data={filteredItems}
-          renderItem={({ item }) => (
-            <ItemCard item={item} navigation={navigation} />
-          )}
-          keyExtractor={(item) => item.id}
-          className="w-full"
-        />
-      ) : (
-        <Text className="text-center text-gray-500 text-lg mt-6">
-          No items found
-        </Text>
-      )}
+      {/* Lista de productos */}
+      <FlatList
+        data={filteredItems}
+        renderItem={({ item }) => (
+          <ItemCard item={item} navigation={navigation} />
+        )}
+        keyExtractor={(item) => item.id}
+        className="w-full"
+      />
     </View>
   );
 };
