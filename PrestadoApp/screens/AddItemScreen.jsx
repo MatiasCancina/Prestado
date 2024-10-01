@@ -1,4 +1,3 @@
-// screens/AddItemScreen.js
 import React from "react";
 import { View } from "react-native";
 import AddItemForm from "../components/AddItemForm";
