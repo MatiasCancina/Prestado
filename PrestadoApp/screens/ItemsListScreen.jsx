@@ -6,13 +6,14 @@ import {
   FlatList,
   TextInput,
   Switch,
-  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
 import { db } from "../firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 import ItemCard from "../components/ItemCard";
 import { useIsFocused } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
 
 const ItemsListScreen = ({ navigation }) => {
   const [itemsList, setItemsList] = useState([]);
@@ -66,14 +67,6 @@ const ItemsListScreen = ({ navigation }) => {
     }
   }, [isFocused]);
 
-  if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
-
   const filteredItems = itemsList.filter((item) => {
     const searchTextLower = searchText.toLowerCase();
     const matchesSearchText =
@@ -88,88 +81,211 @@ const ItemsListScreen = ({ navigation }) => {
     return matchesSearchText && matchesRating && matchesAvailability;
   });
 
+  const openMapView = () => {
+    navigation.navigate("MapView", { items: filteredItems });
+  };
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+  
+  const incrementRating = (setter, value, max) => {
+    setter((prevValue) => Math.min(prevValue + 1, max));
+  };
+
+  const decrementRating = (setter, value, min) => {
+    setter((prevValue) => Math.max(prevValue - 1, min));
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#6C63FF" />
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 bg-gray-100">
-      {/* Filtros */}
-      <View className="p-4">
-        <Text className="font-bold">Filter by Rating</Text>
-        <View className="mb-4 flex flex-row justify-between">
-          <View className="flex-row items-center mb-2">
-            <Text className="mr-2">Min Rating:</Text>
-            <TextInput
-              value={String(ratingMin)}
-              onChangeText={(value) => setRatingMin(value)}
-              keyboardType="numeric"
-              className="border-b p-1 w-16 text-center"
-              placeholder="1"
-            />
-          </View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Discover Items</Text>
+        <TouchableOpacity onPress={openMapView} style={styles.mapButton}>
+          <Feather name="map" size={24} color="#6C63FF" />
+        </TouchableOpacity>
+      </View>
 
-          <View className="flex-row items-center">
-            <Text className="mr-2">Max Rating:</Text>
-            <TextInput
-              value={String(ratingMax)}
-              onChangeText={(value) => setRatingMax(value)}
-              keyboardType="numeric"
-              className="border-b p-1 w-16 text-center"
-              placeholder="5"
-            />
+      <View style={styles.searchContainer}>
+        <Feather
+          name="search"
+          size={20}
+          color="#6C63FF"
+          style={styles.searchIcon}
+        />
+        <TextInput
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="Search by name or category"
+          style={styles.searchInput}
+        />
+      </View>
+
+      <View style={styles.filterContainer}>
+        <Text style={styles.filterTitle}>Filters</Text>
+        <View style={styles.ratingFilter}>
+          <Text style={styles.filterLabel}>Min Rating: {ratingMin}</Text>
+          <View style={styles.ratingControls}>
+            <TouchableOpacity
+              onPress={() => decrementRating(setRatingMin, ratingMin, 1)}
+              style={styles.ratingButton}
+            >
+              <Feather name="minus" size={20} color="#6C63FF" />
+            </TouchableOpacity>
+            <Text style={styles.ratingValue}>{ratingMin}</Text>
+            <TouchableOpacity
+              onPress={() => incrementRating(setRatingMin, ratingMin, 5)}
+              style={styles.ratingButton}
+            >
+              <Feather name="plus" size={20} color="#6C63FF" />
+            </TouchableOpacity>
           </View>
         </View>
-        <View className="mb-4 flex flex-row justify-between">
-          <TextInput
-            value={searchText}
-            onChangeText={setSearchText}
-            placeholder="Search by name or category"
-            className="border-b p-2 mb-4"
+        <View style={styles.ratingFilter}>
+          <Text style={styles.filterLabel}>Max Rating: {ratingMax}</Text>
+          <View style={styles.ratingControls}>
+            <TouchableOpacity
+              onPress={() => decrementRating(setRatingMax, ratingMax, 1)}
+              style={styles.ratingButton}
+            >
+              <Feather name="minus" size={20} color="#6C63FF" />
+            </TouchableOpacity>
+            <Text style={styles.ratingValue}>{ratingMax}</Text>
+            <TouchableOpacity
+              onPress={() => incrementRating(setRatingMax, ratingMax, 5)}
+              style={styles.ratingButton}
+            >
+              <Feather name="plus" size={20} color="#6C63FF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.availabilityFilter}>
+          <Text style={styles.filterLabel}>Available Only</Text>
+          <Switch
+            value={availabilityFilter}
+            onValueChange={setAvailabilityFilter}
+            trackColor={{ false: "#767577", true: "#6C63FF" }}
+            thumbColor={availabilityFilter ? "#f4f3f4" : "#f4f3f4"}
           />
-
-          <View className="flex-row items-center mb-4">
-            <Text className="mr-2">Available Only:</Text>
-            <Switch
-              value={availabilityFilter}
-              onValueChange={setAvailabilityFilter}
-            />
-          </View>
         </View>
       </View>
 
-      {/* Mapa */}
-      <View style={{ height: 300, marginBottom: 20 }}>
-        <MapView
-          style={{ flex: 1 }}
-          initialRegion={{
-            latitude: itemsList[0]?.location?.latitude || 0,
-            longitude: itemsList[0]?.location?.longitude || 0,
-            latitudeDelta: 0.05,
-            longitudeDelta: 0.05,
-          }}
-        >
-          {filteredItems.map((item) => (
-            <Marker
-              key={item.id}
-              coordinate={{
-                latitude: item.location.latitude,
-                longitude: item.location.longitude,
-              }}
-              title={item.name}
-              description={item.description}
-            />
-          ))}
-        </MapView>
-      </View>
-
-      {/* Lista de productos */}
       <FlatList
         data={filteredItems}
         renderItem={({ item }) => (
           <ItemCard item={item} navigation={navigation} />
         )}
         keyExtractor={(item) => item.id}
-        className="w-full"
+        contentContainerStyle={styles.listContainer}
       />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F0F0F7",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    elevation: 4,
+    paddingTop: 50,
+
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  mapButton: {
+    padding: 8,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 25,
+    margin: 16,
+    paddingHorizontal: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  filterContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    marginBottom: 16,
+    marginRight: 16,
+    marginLeft: 16,
+    padding: 16,
+    elevation: 2,
+  },
+  filterTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#333",
+  },
+  filterLabel: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 8,
+  },
+  ratingFilter: {
+    marginBottom: 16,
+  },
+  ratingControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F0F0F7",
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  ratingButton: {
+    padding: 8,
+  },
+  ratingValue: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#6C63FF",
+  },
+  availabilityFilter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+  },
+});
 
 export default ItemsListScreen;
