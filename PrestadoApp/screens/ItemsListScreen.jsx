@@ -8,6 +8,7 @@ import {
   Switch,
   StyleSheet,
   TouchableOpacity,
+  Modal,
 } from "react-native";
 import { db } from "../firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
@@ -22,6 +23,7 @@ const ItemsListScreen = ({ navigation }) => {
   const [ratingMin, setRatingMin] = useState(1);
   const [ratingMax, setRatingMax] = useState(5);
   const [availabilityFilter, setAvailabilityFilter] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const isFocused = useIsFocused();
 
   const getItemsList = async () => {
@@ -85,20 +87,18 @@ const ItemsListScreen = ({ navigation }) => {
     navigation.navigate("MapView", { items: filteredItems });
   };
 
-  if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
-  
   const incrementRating = (setter, value, max) => {
     setter((prevValue) => Math.min(prevValue + 1, max));
   };
 
   const decrementRating = (setter, value, min) => {
     setter((prevValue) => Math.max(prevValue - 1, min));
+  };
+
+  const resetFilters = () => {
+    setRatingMin(1);
+    setRatingMax(5);
+    setAvailabilityFilter(false);
   };
 
   if (loading) {
@@ -113,9 +113,14 @@ const ItemsListScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Discover Items</Text>
-        <TouchableOpacity onPress={openMapView} style={styles.mapButton}>
-          <Feather name="map" size={24} color="#6C63FF" />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity onPress={() => setShowFilters(true)} style={styles.filterButton}>
+            <Feather name="sliders" size={24} color="#6C63FF" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={openMapView} style={styles.mapButton}>
+            <Feather name="map" size={24} color="#6C63FF" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.searchContainer}>
@@ -133,55 +138,6 @@ const ItemsListScreen = ({ navigation }) => {
         />
       </View>
 
-      <View style={styles.filterContainer}>
-        <Text style={styles.filterTitle}>Filters</Text>
-        <View style={styles.ratingFilter}>
-          <Text style={styles.filterLabel}>Min Rating: {ratingMin}</Text>
-          <View style={styles.ratingControls}>
-            <TouchableOpacity
-              onPress={() => decrementRating(setRatingMin, ratingMin, 1)}
-              style={styles.ratingButton}
-            >
-              <Feather name="minus" size={20} color="#6C63FF" />
-            </TouchableOpacity>
-            <Text style={styles.ratingValue}>{ratingMin}</Text>
-            <TouchableOpacity
-              onPress={() => incrementRating(setRatingMin, ratingMin, 5)}
-              style={styles.ratingButton}
-            >
-              <Feather name="plus" size={20} color="#6C63FF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.ratingFilter}>
-          <Text style={styles.filterLabel}>Max Rating: {ratingMax}</Text>
-          <View style={styles.ratingControls}>
-            <TouchableOpacity
-              onPress={() => decrementRating(setRatingMax, ratingMax, 1)}
-              style={styles.ratingButton}
-            >
-              <Feather name="minus" size={20} color="#6C63FF" />
-            </TouchableOpacity>
-            <Text style={styles.ratingValue}>{ratingMax}</Text>
-            <TouchableOpacity
-              onPress={() => incrementRating(setRatingMax, ratingMax, 5)}
-              style={styles.ratingButton}
-            >
-              <Feather name="plus" size={20} color="#6C63FF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.availabilityFilter}>
-          <Text style={styles.filterLabel}>Available Only</Text>
-          <Switch
-            value={availabilityFilter}
-            onValueChange={setAvailabilityFilter}
-            trackColor={{ false: "#767577", true: "#6C63FF" }}
-            thumbColor={availabilityFilter ? "#f4f3f4" : "#f4f3f4"}
-          />
-        </View>
-      </View>
-
       <FlatList
         data={filteredItems}
         renderItem={({ item }) => (
@@ -190,6 +146,78 @@ const ItemsListScreen = ({ navigation }) => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
       />
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showFilters}
+        onRequestClose={() => setShowFilters(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.filterTitle}>Filters</Text>
+            <View style={styles.ratingFilter}>
+              <Text style={styles.filterLabel}>Min Rating: {ratingMin}</Text>
+              <View style={styles.ratingControls}>
+                <TouchableOpacity
+                  onPress={() => decrementRating(setRatingMin, ratingMin, 1)}
+                  style={styles.ratingButton}
+                >
+                  <Feather name="minus" size={20} color="#6C63FF" />
+                </TouchableOpacity>
+                <Text style={styles.ratingValue}>{ratingMin}</Text>
+                <TouchableOpacity
+                  onPress={() => incrementRating(setRatingMin, ratingMin, 5)}
+                  style={styles.ratingButton}
+                >
+                  <Feather name="plus" size={20} color="#6C63FF" />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.ratingFilter}>
+              <Text style={styles.filterLabel}>Max Rating: {ratingMax}</Text>
+              <View style={styles.ratingControls}>
+                <TouchableOpacity
+                  onPress={() => decrementRating(setRatingMax, ratingMax, 1)}
+                  style={styles.ratingButton}
+                >
+                  <Feather name="minus" size={20} color="#6C63FF" />
+                </TouchableOpacity>
+                <Text style={styles.ratingValue}>{ratingMax}</Text>
+                <TouchableOpacity
+                  onPress={() => incrementRating(setRatingMax, ratingMax, 5)}
+                  style={styles.ratingButton}
+                >
+                  <Feather name="plus" size={20} color="#6C63FF" />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.availabilityFilter}>
+              <Text style={styles.filterLabel}>Available Only</Text>
+              <Switch
+                value={availabilityFilter}
+                onValueChange={setAvailabilityFilter}
+                trackColor={{ false: "#767577", true: "#6C63FF" }}
+                thumbColor={availabilityFilter ? "#f4f3f4" : "#f4f3f4"}
+              />
+            </View>
+            <View style={styles.filterButtonsContainer}>
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={resetFilters}
+              >
+                <Text style={styles.resetButtonText}>Reset Filters</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.applyButton}
+                onPress={() => setShowFilters(false)}
+              >
+                <Text style={styles.applyButtonText}>Apply Filters</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -212,12 +240,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     elevation: 4,
     paddingTop: 50,
-
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#333",
+  },
+  headerButtons: {
+    flexDirection: "row",
+  },
+  filterButton: {
+    padding: 8,
+    marginRight: 8,
   },
   mapButton: {
     padding: 8,
@@ -229,6 +263,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     margin: 16,
     paddingHorizontal: 16,
+    elevation: 2,
   },
   searchIcon: {
     marginRight: 8,
@@ -238,23 +273,29 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
   },
-  filterContainer: {
+  listContainer: {
+    paddingHorizontal: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    marginBottom: 16,
-    marginRight: 16,
-    marginLeft: 16,
-    padding: 16,
-    elevation: 2,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 22,
+    elevation: 5,
   },
   filterTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 12,
+    marginBottom: 16,
     color: "#333",
   },
   filterLabel: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#333",
     marginBottom: 8,
   },
@@ -282,9 +323,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 16,
   },
-  listContainer: {
-    paddingHorizontal: 16,
+  filterButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  resetButton: {
+    backgroundColor: "#F0F0F7",
+    padding: 16,
+    borderRadius: 25,
+    alignItems: "center",
+    flex: 1,
+    marginRight: 8,
+  },
+  resetButtonText: {
+    color: "#6C63FF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  applyButton: {
+    backgroundColor: "#6C63FF",
+    padding: 16,
+    borderRadius: 25,
+    alignItems: "center",
+    flex: 1,
+    marginLeft: 8,
+  },
+  applyButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
