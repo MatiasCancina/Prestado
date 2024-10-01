@@ -14,18 +14,18 @@ import { useAuthContext } from "../context/AuthContext";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
 
 const LoanManagementScreen = () => {
-  const { user } = useAuthContext();  // Obtener el usuario autenticado
+  const { user } = useAuthContext(); // Obtener el usuario autenticado
   const [loans, setLoans] = useState([]);
   const isFocused = useIsFocused();
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();  // Hook para la navegación
+  const navigation = useNavigation(); // Hook para la navegación
 
   const fetchLoans = async () => {
     setLoading(true);
     try {
       const q = query(
         collection(db, "loans"),
-        where("borrowerId", "==", user.uid)  // Préstamos donde es prestatario
+        where("borrowerId", "==", user.uid) // Préstamos donde es prestatario
       );
 
       const loansSnapshot = await getDocs(q);
@@ -47,14 +47,22 @@ const LoanManagementScreen = () => {
     }
   };
 
-  const markLoanStart = async (loanId) => {
+  const markLoanStart = async (loanId, itemId) => {
     try {
       const loanDoc = doc(db, "loans", loanId);
-      const startDate = new Date(); 
+      const itemDoc = doc(db, "items", itemId); // Referencia al documento del ítem
+      const startDate = new Date();
+
+      // Actualizar el estado del préstamo
       await updateDoc(loanDoc, {
         status: "active",
-        startDate: startDate, 
+        startDate: startDate,
         updatedAt: serverTimestamp(),
+      });
+
+      // Actualizar la disponibilidad del ítem a 'false'
+      await updateDoc(itemDoc, {
+        availability: false,
       });
 
       setLoans((prevLoans) =>
@@ -73,33 +81,30 @@ const LoanManagementScreen = () => {
   const markLoanEnd = async (loan) => {
     try {
       const loanDoc = doc(db, "loans", loan.id);
-      const endDate = new Date(); 
+      const endDate = new Date();
       await updateDoc(loanDoc, {
         status: "completed",
-        endDate: endDate, 
+        endDate: endDate,
         updatedAt: serverTimestamp(),
       });
-  
+
       setLoans((prevLoans) =>
         prevLoans.map((l) =>
-          l.id === loan.id
-            ? { ...l, status: "completed", endDate: endDate }
-            : l
+          l.id === loan.id ? { ...l, status: "completed", endDate: endDate } : l
         )
       );
       alert("Préstamo finalizado");
-  
+
       // Redirigir al formulario de reseñas después de completar el préstamo
-      navigation.navigate('ReviewForm', {
-        loanId: loan.id,         // ID del préstamo
+      navigation.navigate("ReviewForm", {
+        loanId: loan.id, // ID del préstamo
         lenderId: loan.lenderId, // ID del prestador
-        reviewerId: user.uid,    // Prestatario es el que deja la reseña
+        reviewerId: user.uid, // Prestatario es el que deja la reseña
       });
     } catch (error) {
       console.error("Error al finalizar el préstamo:", error);
     }
   };
-  
 
   useEffect(() => {
     if (isFocused) {
@@ -138,14 +143,14 @@ const LoanManagementScreen = () => {
             <Button
               title="Ver perfil del prestador"
               onPress={() =>
-                navigation.navigate('UserProfile', { userId: loan.lenderId })
+                navigation.navigate("UserProfile", { userId: loan.lenderId })
               }
             />
 
             {loan.status === "pending" && (
               <Button
                 title="Iniciar Préstamo"
-                onPress={() => markLoanStart(loan.id)}
+                onPress={() => markLoanStart(loan.id, loan.itemId)}
               />
             )}
 
