@@ -7,7 +7,7 @@ import {
   signOut,
 } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AuthContext = createContext();
 
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   // Función para guardar el usuario en AsyncStorage
   const storeUser = async (user) => {
     try {
-      await AsyncStorage.setItem('user', JSON.stringify(user));
+      await AsyncStorage.setItem("user", JSON.stringify(user));
     } catch (error) {
       console.error("Error saving user to AsyncStorage:", error.message);
     }
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
   // Función para recuperar el usuario de AsyncStorage
   const loadUser = async () => {
     try {
-      const storedUser = await AsyncStorage.getItem('user');
+      const storedUser = await AsyncStorage.getItem("user");
       if (storedUser) {
         setUser(JSON.parse(storedUser));
         navigation.navigate("Home");
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   // Función para eliminar el usuario de AsyncStorage (cuando se cierra sesión)
   const removeUser = async () => {
     try {
-      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem("user");
     } catch (error) {
       console.error("Error removing user from AsyncStorage:", error.message);
     }
@@ -50,7 +50,11 @@ export const AuthProvider = ({ children }) => {
 
   const registerUser = async (email, password) => {
     try {
-      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      const { user } = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       storeUser(user);
     } catch (error) {
       console.error("Error registering user:", error.message);
@@ -83,11 +87,11 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
-        storeUser(user); 
+        storeUser(user);
         navigation.navigate("Home");
       } else {
         setUser(null);
-        removeUser(); 
+        removeUser();
         navigation.navigate("Login");
       }
     });

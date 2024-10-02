@@ -114,7 +114,10 @@ const ItemsListScreen = ({ navigation }) => {
       <View style={styles.header}>
         <Text style={styles.title}>Discover Items</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity onPress={() => setShowFilters(true)} style={styles.filterButton}>
+          <TouchableOpacity
+            onPress={() => setShowFilters(true)}
+            style={styles.filterButton}
+          >
             <Feather name="sliders" size={24} color="#6C63FF" />
           </TouchableOpacity>
           <TouchableOpacity onPress={openMapView} style={styles.mapButton}>

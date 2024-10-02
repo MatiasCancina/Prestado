@@ -32,13 +32,12 @@ const RequestLoanScreen = ({ route, navigation }) => {
         plannedStartDate: plannedStartDate,
         plannedEndDate: plannedEndDate,
         actualStartDate: null,
-        actualEndDate: null
+        actualEndDate: null,
       });
       Alert.alert("Success", "Loan request sent successfully", [
-        { text: "OK", onPress: () => navigation.navigate("Loans") }
+        { text: "OK", onPress: () => navigation.navigate("Loans") },
       ]);
     } catch (error) {
-      console.error("Error requesting loan:", error);
       Alert.alert("Error", "Failed to send loan request. Please try again.");
     }
   };
@@ -61,11 +60,16 @@ const RequestLoanScreen = ({ route, navigation }) => {
         <Feather name="package" size={50} color="#6C63FF" style={styles.icon} />
         <Text style={styles.title}>Loan Request</Text>
         <Text style={styles.itemName}>{itemName}</Text>
-        
+
         <View style={styles.dateContainer}>
-          <TouchableOpacity style={styles.dateButton} onPress={() => setShowStartPicker(true)}>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowStartPicker(true)}
+          >
             <Feather name="calendar" size={24} color="#6C63FF" />
-            <Text style={styles.dateButtonText}>Planned Start: {plannedStartDate.toLocaleDateString()}</Text>
+            <Text style={styles.dateButtonText}>
+              Planned Start: {plannedStartDate.toLocaleDateString()}
+            </Text>
           </TouchableOpacity>
           {showStartPicker && (
             <DateTimePicker
@@ -79,9 +83,14 @@ const RequestLoanScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.dateContainer}>
-          <TouchableOpacity style={styles.dateButton} onPress={() => setShowEndPicker(true)}>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowEndPicker(true)}
+          >
             <Feather name="calendar" size={24} color="#6C63FF" />
-            <Text style={styles.dateButtonText}>Planned End: {plannedEndDate.toLocaleDateString()}</Text>
+            <Text style={styles.dateButtonText}>
+              Planned End: {plannedEndDate.toLocaleDateString()}
+            </Text>
           </TouchableOpacity>
           {showEndPicker && (
             <DateTimePicker
@@ -94,7 +103,10 @@ const RequestLoanScreen = ({ route, navigation }) => {
           )}
         </View>
 
-        <TouchableOpacity style={styles.confirmButton} onPress={handleRequestLoan}>
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleRequestLoan}
+        >
           <Text style={styles.confirmButtonText}>Confirm Request</Text>
         </TouchableOpacity>
       </View>

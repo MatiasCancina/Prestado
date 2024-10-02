@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator } from "react-native";
-import getUserReputation from "../utils/getUserReputation"; 
+import getUserReputation from "../utils/getUserReputation";
 
 const UserProfile = ({ route }) => {
-  const { userId } = route.params;  // userId del prestador
+  const { userId } = route.params; // userId del prestador
   const [reputation, setReputation] = useState(null);
 
   useEffect(() => {
     const fetchReputation = async () => {
-      const avgRating = await getUserReputation(userId); 
+      const avgRating = await getUserReputation(userId);
       setReputation(avgRating);
     };
 
