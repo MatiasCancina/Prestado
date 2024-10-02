@@ -20,7 +20,7 @@ const ReviewForm = ({ route, navigation }) => {
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      Alert.alert("Error", "Por favor, selecciona una calificación.");
+      Alert.alert("Error", "Please select a rating.");
       return;
     }
 
@@ -36,16 +36,15 @@ const ReviewForm = ({ route, navigation }) => {
         createdAt: serverTimestamp(),
       });
 
-      Alert.alert("Reseña enviada", "Gracias por tu valoración.", [
+      Alert.alert("Review submitted", "Thank you for your rating.", [
         { text: "OK", onPress: () => navigation.navigate("LoanManagement") },
       ]);
 
       navigation.navigate("UserProfile");
     } catch (error) {
-      console.error("Error al enviar la reseña:", error);
       Alert.alert(
         "Error",
-        "Ocurrió un error al enviar la reseña. Por favor, inténtalo de nuevo."
+        "An error occurred while submitting the review. Please try again."
       );
     } finally {
       setIsSubmitting(false);

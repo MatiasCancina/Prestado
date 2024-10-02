@@ -34,8 +34,8 @@ const AddItemForm = ({ navigation }) => {
 
     if (cameraStatus !== "granted" || galleryStatus !== "granted") {
       Alert.alert(
-        "Permisos faltantes",
-        "Se requieren permisos para acceder a la cámara y a la galería.",
+        "Missing Permissions",
+        "Permissions are required to access the camera and gallery.",
         [{ text: "Ok" }]
       );
     }
@@ -111,8 +111,7 @@ const AddItemForm = ({ navigation }) => {
       navigation.navigate("ItemsList");
       Alert.alert("Success", "Item added successfully!");
     } catch (error) {
-      console.log("Error", error.message);
-      Alert.alert("Error", "Ocurrió un error al agregar el ítem.");
+      Alert.alert("Error", "An error occurred while adding the item.");
     }
   };
 

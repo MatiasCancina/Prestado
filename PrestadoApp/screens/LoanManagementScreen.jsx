@@ -6,6 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { db } from "../firebaseConfig";
 import {
@@ -66,7 +67,7 @@ const LoanManagementScreen = () => {
   };
 
   const markLoanStart = async (loan) => {
-    let loanId = loan.id
+    let loanId = loan.id;
     try {
       const loanDoc = doc(db, "loans", loanId);
       const itemDoc = doc(db, "items", loan.itemId);
@@ -129,7 +130,7 @@ const LoanManagementScreen = () => {
             : l
         )
       );
-      alert("Loan completed successfully");
+      Alert.alert("Loan completed successfully");
 
       navigation.navigate("ReviewForm", {
         loanId: loan.id,
@@ -138,8 +139,7 @@ const LoanManagementScreen = () => {
         itemName: loan.itemName,
       });
     } catch (error) {
-      console.error("Error ending the loan:", error);
-      alert(`Error ending the loan: ${error.message}`);
+      Alert.alert(`Error ending the loan: ${error.message}`);
     }
   };
 
