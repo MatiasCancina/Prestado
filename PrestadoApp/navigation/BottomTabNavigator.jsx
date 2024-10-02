@@ -51,10 +51,10 @@ const BottomTabNavigator = () => {
               </View>
             );
           },
-          headerShown: false
+          headerShown: false,
         }}
       />
-            <Tab.Screen
+      <Tab.Screen
         name="Loans"
         component={LoanManagementStackNavigator}
         options={{
@@ -69,9 +69,9 @@ const BottomTabNavigator = () => {
               </View>
             );
           },
+          headerShown: false,
         }}
       />
-
     </Tab.Navigator>
   );
 };

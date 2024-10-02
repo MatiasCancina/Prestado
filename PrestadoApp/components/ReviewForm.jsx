@@ -1,61 +1,174 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, Alert, Text } from "react-native";
-import { Rating } from "react-native-ratings";
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { db } from "../firebaseConfig";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { Feather } from "@expo/vector-icons";
 
 const ReviewForm = ({ route, navigation }) => {
-  const { loanId, lenderId, reviewerId } = route.params;
-  const [rating, setRating] = useState("");
+  const { loanId, lenderId, reviewerId, itemName } = route.params;
+  const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (parseInt(rating, 10) < 1 || parseInt(rating, 10) > 5) {
-      Alert.alert("Error", "La calificación debe estar entre 1 y 5.");
+    if (rating === 0) {
+      Alert.alert("Error", "Por favor, selecciona una calificación.");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       await addDoc(collection(db, "reviews"), {
         loanId,
         lenderId,
         reviewerId,
-        rating: parseInt(rating, 10),
+        rating,
         review,
         createdAt: serverTimestamp(),
       });
 
-      Alert.alert("Reseña enviada", "Gracias por tu valoración.");
-      navigation.navigate("LoanManagement");
+      Alert.alert("Reseña enviada", "Gracias por tu valoración.", [
+        { text: "OK", onPress: () => navigation.navigate("LoanManagement") },
+      ]);
+
+      navigation.navigate("UserProfile");
     } catch (error) {
       console.error("Error al enviar la reseña:", error);
-      Alert.alert("Error", "Ocurrió un error al enviar la reseña.");
+      Alert.alert(
+        "Error",
+        "Ocurrió un error al enviar la reseña. Por favor, inténtalo de nuevo."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const renderStars = () => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <TouchableOpacity
+          key={i}
+          onPress={() => setRating(i)}
+          style={styles.starContainer}
+        >
+          <Feather
+            name={i <= rating ? "star" : "star"}
+            size={40}
+            color={i <= rating ? "#6C63FF" : "#c8c7c8"}
+          />
+        </TouchableOpacity>
+      );
+    }
+    return stars;
+  };
+
   return (
-    <View>
-      <Text>Valorar el préstamo</Text>
+    <View style={styles.container}>
+      <View style={styles.card}>
+        <Feather name="star" size={50} color="#6C63FF" style={styles.icon} />
+        <Text style={styles.title}>Valorar el préstamo</Text>
+        <Text style={styles.itemName}>{itemName}</Text>
 
-      <Rating
-        showRating
-        startingValue={rating}
-        onFinishRating={setRating}
-        style={{ paddingVertical: 10 }}
-        minValue={1}
-        maxValue={5}
-      />
+        <View style={styles.ratingContainer}>{renderStars()}</View>
 
-      <TextInput
-        placeholder="Escribe una reseña"
-        value={review}
-        onChangeText={setReview}
-        style={{ borderWidth: 1, marginBottom: 10, height: 100 }}
-        multiline
-      />
-      <Button title="Enviar Reseña" onPress={handleSubmit} />
+        <TextInput
+          placeholder="Escribe tu experiencia con el préstamo"
+          value={review}
+          onChangeText={setReview}
+          style={styles.input}
+          multiline
+          numberOfLines={4}
+          textAlignVertical="top"
+        />
+
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.submitButtonText}>Enviar Reseña</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F0F0F7",
+    padding: 20,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 30,
+    width: "100%",
+    alignItems: "center",
+    elevation: 5,
+  },
+  icon: {
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+  },
+  itemName: {
+    fontSize: 18,
+    color: "#666",
+    marginBottom: 20,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  starContainer: {
+    padding: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    width: "100%",
+    height: 120,
+    textAlignVertical: "top",
+  },
+  submitButton: {
+    backgroundColor: "#6C63FF",
+    borderRadius: 25,
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    width: "100%",
+    alignItems: "center",
+  },
+  submitButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+});
 
 export default ReviewForm;

@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Button, FlatList, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
 import { db } from "../firebaseConfig";
 import {
   collection,
@@ -12,13 +19,14 @@ import {
 } from "firebase/firestore";
 import { useAuthContext } from "../context/AuthContext";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
 
 const LoanManagementScreen = () => {
-  const { user } = useAuthContext(); // Obtener el usuario autenticado
+  const { user } = useAuthContext();
   const [loans, setLoans] = useState([]);
   const isFocused = useIsFocused();
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation(); // Hook para la navegación
+  const navigation = useNavigation();
 
   const fetchLoans = async () => {
     setLoading(true);
@@ -34,8 +42,18 @@ const LoanManagementScreen = () => {
         return {
           id: doc.id,
           ...data,
-          startDate: data.startDate ? data.startDate.toDate() : null,
-          endDate: data.endDate ? data.endDate.toDate() : null,
+          plannedStartDate: data.plannedStartDate
+            ? data.plannedStartDate.toDate()
+            : null,
+          plannedEndDate: data.plannedEndDate
+            ? data.plannedEndDate.toDate()
+            : null,
+          actualStartDate: data.actualStartDate
+            ? data.actualStartDate.toDate()
+            : null,
+          actualEndDate: data.actualEndDate
+            ? data.actualEndDate.toDate()
+            : null,
         };
       });
 
@@ -47,16 +65,17 @@ const LoanManagementScreen = () => {
     }
   };
 
-  const markLoanStart = async (loanId, itemId) => {
+  const markLoanStart = async (loan) => {
+    let loanId = loan.id
     try {
       const loanDoc = doc(db, "loans", loanId);
-      const itemDoc = doc(db, "items", itemId); // Referencia al documento del ítem
-      const startDate = new Date();
+      const itemDoc = doc(db, "items", loan.itemId);
+      const actualStartDate = new Date();
 
       // Actualizar el estado del préstamo
       await updateDoc(loanDoc, {
         status: "active",
-        startDate: startDate,
+        actualStartDate: actualStartDate,
         updatedAt: serverTimestamp(),
       });
 
@@ -68,41 +87,59 @@ const LoanManagementScreen = () => {
       setLoans((prevLoans) =>
         prevLoans.map((loan) =>
           loan.id === loanId
-            ? { ...loan, status: "active", startDate: startDate }
+            ? { ...loan, status: "active", actualStartDate: actualStartDate }
             : loan
         )
       );
-      alert("Préstamo iniciado");
+      alert("Loan started successfully");
     } catch (error) {
-      console.error("Error al iniciar el préstamo:", error);
+      console.error("Error starting the loan:", error);
     }
   };
 
   const markLoanEnd = async (loan) => {
     try {
+      if (!loan.id || !loan.itemId) {
+        throw new Error("Invalid loan data: missing id or itemId");
+      }
+
       const loanDoc = doc(db, "loans", loan.id);
-      const endDate = new Date();
+      const itemDoc = doc(db, "items", loan.itemId);
+      const actualEndDate = new Date();
+
       await updateDoc(loanDoc, {
         status: "completed",
-        endDate: endDate,
+        actualEndDate: actualEndDate,
         updatedAt: serverTimestamp(),
       });
 
+      // Actualizar la disponibilidad del ítem a 'false'
+      try {
+        await updateDoc(itemDoc, {
+          availability: true,
+        });
+      } catch (itemUpdateError) {
+        console.error("Error updating item availability:", itemUpdateError);
+      }
+
       setLoans((prevLoans) =>
         prevLoans.map((l) =>
-          l.id === loan.id ? { ...l, status: "completed", endDate: endDate } : l
+          l.id === loan.id
+            ? { ...l, status: "completed", actualEndDate: actualEndDate }
+            : l
         )
       );
-      alert("Préstamo finalizado");
+      alert("Loan completed successfully");
 
-      // Redirigir al formulario de reseñas después de completar el préstamo
       navigation.navigate("ReviewForm", {
-        loanId: loan.id, // ID del préstamo
-        lenderId: loan.lenderId, // ID del prestador
-        reviewerId: user.uid, // Prestatario es el que deja la reseña
+        loanId: loan.id,
+        lenderId: loan.lenderId,
+        reviewerId: user.uid,
+        itemName: loan.itemName,
       });
     } catch (error) {
-      console.error("Error al finalizar el préstamo:", error);
+      console.error("Error ending the loan:", error);
+      alert(`Error ending the loan: ${error.message}`);
     }
   };
 
@@ -114,57 +151,203 @@ const LoanManagementScreen = () => {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#6C63FF" />
       </View>
     );
   }
 
+  const renderLoanItem = ({ item: loan }) => (
+    <View style={styles.loanCard}>
+      <View style={styles.loanHeader}>
+        <Text style={styles.loanTitle}>Loan for Item: {loan.itemName}</Text>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: getStatusColor(loan.status) },
+          ]}
+        >
+          <Text style={styles.statusText}>{loan.status}</Text>
+        </View>
+      </View>
+      <View style={styles.loanDetails}>
+        <View style={styles.detailRow}>
+          <Feather name="calendar" size={16} color="#6C63FF" />
+          <Text style={styles.detailText}>
+            Planned Start:{" "}
+            {loan.plannedStartDate
+              ? loan.plannedStartDate.toLocaleDateString()
+              : "Not set"}
+          </Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Feather name="calendar" size={16} color="#6C63FF" />
+          <Text style={styles.detailText}>
+            Planned End:{" "}
+            {loan.plannedEndDate
+              ? loan.plannedEndDate.toLocaleDateString()
+              : "Not set"}
+          </Text>
+        </View>
+        {loan.actualStartDate && (
+          <View style={styles.detailRow}>
+            <Feather name="play-circle" size={16} color="#4CAF50" />
+            <Text style={styles.detailText}>
+              Actual Start: {loan.actualStartDate.toLocaleDateString()}
+            </Text>
+          </View>
+        )}
+        {loan.actualEndDate && (
+          <View style={styles.detailRow}>
+            <Feather name="check-circle" size={16} color="#F44336" />
+            <Text style={styles.detailText}>
+              Actual End: {loan.actualEndDate.toLocaleDateString()}
+            </Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            navigation.navigate("UserProfile", { userId: loan.lenderId })
+          }
+        >
+          <Feather name="user" size={16} color="#FFFFFF" />
+          <Text style={styles.buttonText}>Lender Profile</Text>
+        </TouchableOpacity>
+        {loan.status === "pending" && (
+          <TouchableOpacity
+            style={[styles.button, styles.startButton]}
+            onPress={() => markLoanStart(loan)}
+          >
+            <Feather name="play" size={16} color="#FFFFFF" />
+            <Text style={styles.buttonText}>Start Loan</Text>
+          </TouchableOpacity>
+        )}
+        {loan.status === "active" && (
+          <TouchableOpacity
+            style={[styles.button, styles.endButton]}
+            onPress={() => markLoanEnd(loan)}
+          >
+            <Feather name="check" size={16} color="#FFFFFF" />
+            <Text style={styles.buttonText}>End Loan</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "pending":
+        return "#FFA500";
+      case "active":
+        return "#4CAF50";
+      case "completed":
+        return "#2196F3";
+      default:
+        return "#6C63FF";
+    }
+  };
+
   return (
-    <View>
-      <Text className="font-semibold text-xl mb-5">Gestión de Préstamos</Text>
+    <View style={styles.container}>
+      <Text style={styles.screenTitle}>Loan Management</Text>
       <FlatList
         data={loans}
         keyExtractor={(loan) => loan.id}
-        renderItem={({ item: loan }) => (
-          <View className="bg-blue-200 my-2 p-4">
-            <Text>Ítem: {loan.itemId}</Text>
-            <Text>Estado: {loan.status}</Text>
-            <Text>
-              Fecha de inicio:
-              {loan.startDate ? loan.startDate.toString() : "No iniciado"}
-            </Text>
-            <Text>
-              Fecha de fin:
-              {loan.endDate ? loan.endDate.toString() : "No finalizado"}
-            </Text>
-
-            {/* Botón para ver el perfil del prestador */}
-            <Button
-              title="Ver perfil del prestador"
-              onPress={() =>
-                navigation.navigate("UserProfile", { userId: loan.lenderId })
-              }
-            />
-
-            {loan.status === "pending" && (
-              <Button
-                title="Iniciar Préstamo"
-                onPress={() => markLoanStart(loan.id, loan.itemId)}
-              />
-            )}
-
-            {loan.status === "active" && (
-              <Button
-                title="Finalizar Préstamo"
-                onPress={() => markLoanEnd(loan)}
-              />
-            )}
-          </View>
-        )}
+        renderItem={renderLoanItem}
+        contentContainerStyle={styles.listContainer}
       />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F0F0F7",
+    padding: 16,
+    marginTop: 50,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  screenTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 16,
+    color: "#333",
+  },
+  listContainer: {
+    paddingBottom: 16,
+  },
+  loanCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 3,
+  },
+  loanHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  loanTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    textTransform: "capitalize",
+  },
+  loanDetails: {
+    marginBottom: 12,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  detailText: {
+    marginLeft: 8,
+    color: "#666",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#6C63FF",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  startButton: {
+    backgroundColor: "#4CAF50",
+  },
+  endButton: {
+    backgroundColor: "#F44336",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    marginLeft: 4,
+  },
+});
 
 export default LoanManagementScreen;
