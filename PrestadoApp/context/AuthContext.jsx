@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { auth } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { doc, setDoc } from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -55,9 +56,16 @@ export const AuthProvider = ({ children }) => {
         email,
         password
       );
+      await setDoc(doc(db, "users", user.uid), {
+        email: user.email,
+        createdAt: new Date(),
+      });
+
       storeUser(user);
+      return user
     } catch (error) {
       console.error("Error registering user:", error.message);
+      throw error
     }
   };
 
@@ -65,8 +73,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const { user } = await signInWithEmailAndPassword(auth, email, password);
       storeUser(user);
+      return user
     } catch (error) {
       console.error("Error logging in:", error.message);
+      throw error;
     }
   };
 
