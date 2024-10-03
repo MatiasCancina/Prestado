@@ -16,7 +16,9 @@ const ItemDetailsScreen = ({ route, navigation }) => {
   const { itemId } = route.params;
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lender, setLender] = useState(null); // Estado para almacenar los datos del usuario (lender)
 
+  // Obtener detalles del ítem
   useEffect(() => {
     const fetchItemDetails = async () => {
       try {
@@ -37,6 +39,28 @@ const ItemDetailsScreen = ({ route, navigation }) => {
 
     fetchItemDetails();
   }, [itemId]);
+
+  // Obtener detalles del usuario (lender) que creó el ítem
+  useEffect(() => {
+    if (item && item.lenderId) {
+      const fetchLenderDetails = async () => {
+        try {
+          const lenderRef = doc(db, "users", item.lenderId);
+          const lenderSnap = await getDoc(lenderRef);
+
+          if (lenderSnap.exists()) {
+            setLender(lenderSnap.data());
+          } else {
+            console.log("Lender not found!");
+          }
+        } catch (error) {
+          console.error("Error fetching lender details:", error);
+        }
+      };
+
+      fetchLenderDetails();
+    }
+  }, [item]);
 
   if (loading) {
     return (
@@ -80,6 +104,7 @@ const ItemDetailsScreen = ({ route, navigation }) => {
             {item.availability ? "Available" : "Not Available"}
           </Text>
         </View>
+
         <View style={styles.locationContainer}>
           <Feather name="map-pin" size={20} color="#6C63FF" />
           <Text style={styles.location}>
@@ -87,6 +112,15 @@ const ItemDetailsScreen = ({ route, navigation }) => {
             {item.location.longitude.toFixed(6)}
           </Text>
         </View>
+
+        {/* Mostrar detalles del prestador */}
+        {lender && (
+          <View style={styles.lenderContainer}>
+            <Feather name="user" size={20} color="#6C63FF" />
+            <Text style={styles.lenderText}>Lender: {lender.email}</Text>
+          </View>
+        )}
+
         <TouchableOpacity
           style={styles.requestButton}
           onPress={() =>
@@ -181,6 +215,16 @@ const styles = StyleSheet.create({
   },
   location: {
     fontSize: 14,
+    color: "#666",
+    marginLeft: 8,
+  },
+  lenderContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  lenderText: {
+    fontSize: 16,
     color: "#666",
     marginLeft: 8,
   },
