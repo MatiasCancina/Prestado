@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   TextInput,
@@ -7,6 +7,7 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  Keyboard,
 } from "react-native";
 import { db } from "../firebaseConfig";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
@@ -17,6 +18,7 @@ const ReviewForm = ({ route, navigation }) => {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const reviewInputRef = useRef(null);
 
   const handleSubmit = async () => {
     if (rating === 0) {
@@ -37,10 +39,8 @@ const ReviewForm = ({ route, navigation }) => {
       });
 
       Alert.alert("Review submitted", "Thank you for your rating.", [
-        { text: "OK", onPress: () => navigation.navigate("LoanManagement") },
+        { text: "OK", onPress: () => navigation.navigate("UserProfile", { userId: lenderId }) },
       ]);
-
-      navigation.navigate("UserProfile");
     } catch (error) {
       Alert.alert(
         "Error",
@@ -71,23 +71,30 @@ const ReviewForm = ({ route, navigation }) => {
     return stars;
   };
 
+  const handleReviewSubmit = () => {
+    Keyboard.dismiss();
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         <Feather name="star" size={50} color="#6C63FF" style={styles.icon} />
-        <Text style={styles.title}>Valorar el préstamo</Text>
+        <Text style={styles.title}>Rate the loan</Text>
         <Text style={styles.itemName}>{itemName}</Text>
 
         <View style={styles.ratingContainer}>{renderStars()}</View>
 
         <TextInput
-          placeholder="Escribe tu experiencia con el préstamo"
+          ref={reviewInputRef}
+          placeholder="Describe your experience with the loan"
           value={review}
           onChangeText={setReview}
           style={styles.input}
           multiline
           numberOfLines={4}
           textAlignVertical="top"
+          blurOnSubmit={true}
+          onSubmitEditing={handleReviewSubmit}
         />
 
         <TouchableOpacity
@@ -98,7 +105,7 @@ const ReviewForm = ({ route, navigation }) => {
           {isSubmitting ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.submitButtonText}>Enviar Reseña</Text>
+            <Text style={styles.submitButtonText}>Submit Review</Text>
           )}
         </TouchableOpacity>
       </View>
