@@ -12,11 +12,7 @@ const BottomTabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        // header: () => {
-        //     return <Header title={route.name} />;
-        // },
         tabBarShowLabel: false,
-        // tabBarStyle: styles.tabBar,
       })}
     >
       <Tab.Screen
@@ -34,6 +30,7 @@ const BottomTabNavigator = () => {
               </View>
             );
           },
+          headerShown: false,
         }}
       />
       <Tab.Screen
