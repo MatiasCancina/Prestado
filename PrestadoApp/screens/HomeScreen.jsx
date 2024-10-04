@@ -1,23 +1,65 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
+  Dimensions,
 } from "react-native";
 import { useAuthContext } from "../context/AuthContext";
 import { Feather } from "@expo/vector-icons";
+import { db } from "../firebaseConfig";
+import { collection, query, where, getDocs } from "firebase/firestore";
+
+const { width } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
   const { user } = useAuthContext();
+  const [userStats, setUserStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      try {
+        const reviewsQuery = query(
+          collection(db, "reviews"),
+          where("lenderId", "==", user.uid)
+        );
+        const reviewsSnapshot = await getDocs(reviewsQuery);
+        const reviewsCount = reviewsSnapshot.size;
+
+        let totalRating = 0;
+        reviewsSnapshot.forEach((doc) => {
+          totalRating += doc.data().rating;
+        });
+        const averageRating = reviewsCount > 0 ? (totalRating / reviewsCount).toFixed(1) : 0;
+
+        const itemsQuery = query(
+          collection(db, "items"),
+          where("lenderId", "==", user.uid)
+        );
+        const itemsSnapshot = await getDocs(itemsQuery);
+        const lentItemsCount = itemsSnapshot.size;
+
+        setUserStats({
+          reviewsCount,
+          averageRating,
+          lentItemsCount,
+        });
+      } catch (error) {
+        console.error("Error fetching user stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserStats();
+  }, [user.uid]);
 
   const navigateToAddItem = () => {
     navigation.navigate("List", { screen: "AddItem" });
-  };
-
-  const navigateToMyItems = () => {
-    navigation.navigate("MyItems");
   };
 
   const navigateToAllItems = () => {
@@ -27,43 +69,53 @@ const HomeScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.welcomeText}>Welcome, {user.email}!</Text>
+        <Text style={styles.welcomeText}>Welcome back,</Text>
+        <Text style={styles.userEmail}>{user.email}</Text>
       </View>
 
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={navigateToAddItem}
-        >
-          <Feather name="plus-circle" size={24} color="#FFFFFF" />
-          <Text style={styles.actionButtonText}>Add New Item</Text>
-        </TouchableOpacity>
+      <View style={styles.content}>
+        <View style={styles.statsContainer}>
+          {loading ? (
+            <ActivityIndicator size="large" color="#6C63FF" />
+          ) : (
+            <>
+              <View style={styles.statCard}>
+                <Feather name="star" size={32} color="#FFD700" />
+                <Text style={styles.statValue}>{userStats.averageRating}</Text>
+                <Text style={styles.statLabel}>Average Rating</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Feather name="message-square" size={32} color="#6C63FF" />
+                <Text style={styles.statValue}>{userStats.reviewsCount}</Text>
+                <Text style={styles.statLabel}>Reviews</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Feather name="box" size={32} color="#4CAF50" />
+                <Text style={styles.statValue}>{userStats.lentItemsCount}</Text>
+                <Text style={styles.statLabel}>Items Listed</Text>
+              </View>
+            </>
+          )}
+        </View>
 
-        {/* <TouchableOpacity style={styles.actionButton} onPress={navigateToMyItems}>
-          <Feather name="list" size={24} color="#FFFFFF" />
-          <Text style={styles.actionButtonText}>My Items</Text>
-        </TouchableOpacity> */}
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.addItemButton]}
+            onPress={navigateToAddItem}
+          >
+            <Feather name="plus-circle" size={24} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Add New Item</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={navigateToAllItems}
-        >
-          <Feather name="search" size={24} color="#FFFFFF" />
-          <Text style={styles.actionButtonText}>Explore Items</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.exploreButton]}
+            onPress={navigateToAllItems}
+          >
+            <Feather name="search" size={24} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Explore Items</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      {/* <View style={styles.statsContainer}>
-        <Text style={styles.statsTitle}>Your Stats</Text>
-        <View style={styles.statItem}>
-          <Feather name="box" size={20} color="#6C63FF" />
-          <Text style={styles.statText}>5 Items Lent</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Feather name="star" size={20} color="#6C63FF" />
-          <Text style={styles.statText}>4.8 Average Rating</Text>
-        </View>
-      </View> */}
     </ScrollView>
   );
 };
@@ -74,55 +126,83 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F0F7",
   },
   header: {
-    backgroundColor: "#6C63FF",
     padding: 20,
-    alignItems: "center",
+    backgroundColor: "#6C63FF",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    marginBottom: 20,
+    paddingTop: 50,
   },
   welcomeText: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#FFFFFF",
   },
-  actionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 20,
+  userEmail: {
+    fontSize: 18,
+    color: "#FFFFFF",
+    marginTop: 5,
+  },
+  content: {
+    flex: 1,
+    backgroundColor: "#F0F0F7",
+    padding: 20,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
+  statCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 15,
+    padding: 15,
+    alignItems: 'center',
+    width: width * 0.28,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: "#333",
+    marginTop: 5,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  actionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   actionButton: {
-    backgroundColor: "#6C63FF",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
-    width: "30%",
+    width: "48%",
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  addItemButton: {
+    backgroundColor: "#6C63FF",
+  },
+  exploreButton: {
+    backgroundColor: "#4CAF50",
   },
   actionButtonText: {
     color: "#FFFFFF",
-    marginTop: 5,
-    textAlign: "center",
-  },
-  statsContainer: {
-    backgroundColor: "#FFFFFF",
-    margin: 15,
-    padding: 20,
-    borderRadius: 10,
-    elevation: 3,
-  },
-  statsTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 15,
-    color: "#333",
-  },
-  statItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  statText: {
     marginLeft: 10,
     fontSize: 16,
-    color: "#333",
+    fontWeight: 'bold',
   },
 });
 
