@@ -15,6 +15,7 @@ import { useAuthContext } from "../context/AuthContext";
 import * as ImagePicker from "expo-image-picker";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { Feather } from "@expo/vector-icons";
+import { useUserStats } from "../context/UserStatsContext";
 
 const AddItemForm = ({ navigation }) => {
   const [name, setName] = useState("");
@@ -25,6 +26,7 @@ const AddItemForm = ({ navigation }) => {
   const [rating, setRating] = useState(0);
   const [imageUri, setImageUri] = useState(null);
   const { user } = useAuthContext();
+  const { updateLentItemsCount } = useUserStats()
 
   const requestPermissions = async () => {
     const { status: cameraStatus } =
@@ -117,10 +119,13 @@ const AddItemForm = ({ navigation }) => {
         createdAt: new Date(),
       });
 
+      // Update the lent items count
+      updateLentItemsCount(1);
+
       navigation.navigate("ItemsList");
-      Alert.alert("Éxito", "Ítem agregado correctamente!");
+      Alert.alert("Success", "Item added successfully!");
     } catch (error) {
-      Alert.alert("Error", "Ocurrió un error al agregar el ítem.");
+      Alert.alert("Error", "An error occurred while adding the item.");
     }
   };
 

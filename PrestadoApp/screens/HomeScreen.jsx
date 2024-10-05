@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -9,54 +9,14 @@ import {
   Dimensions,
 } from "react-native";
 import { useAuthContext } from "../context/AuthContext";
+import { useUserStats } from "../context/UserStatsContext";
 import { Feather } from "@expo/vector-icons";
-import { db } from "../firebaseConfig";
-import { collection, query, where, getDocs } from "firebase/firestore";
 
 const { width } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
   const { user } = useAuthContext();
-  const [userStats, setUserStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserStats = async () => {
-      try {
-        const reviewsQuery = query(
-          collection(db, "reviews"),
-          where("lenderId", "==", user.uid)
-        );
-        const reviewsSnapshot = await getDocs(reviewsQuery);
-        const reviewsCount = reviewsSnapshot.size;
-
-        let totalRating = 0;
-        reviewsSnapshot.forEach((doc) => {
-          totalRating += doc.data().rating;
-        });
-        const averageRating = reviewsCount > 0 ? (totalRating / reviewsCount).toFixed(1) : 0;
-
-        const itemsQuery = query(
-          collection(db, "items"),
-          where("lenderId", "==", user.uid)
-        );
-        const itemsSnapshot = await getDocs(itemsQuery);
-        const lentItemsCount = itemsSnapshot.size;
-
-        setUserStats({
-          reviewsCount,
-          averageRating,
-          lentItemsCount,
-        });
-      } catch (error) {
-        console.error("Error fetching user stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserStats();
-  }, [user.uid]);
+  const { userStats, loading } = useUserStats();
 
   const navigateToAddItem = () => {
     navigation.navigate("List", { screen: "AddItem" });
@@ -81,17 +41,17 @@ const HomeScreen = ({ navigation }) => {
             <>
               <View style={styles.statCard}>
                 <Feather name="star" size={32} color="#FFD700" />
-                <Text style={styles.statValue}>{userStats.averageRating}</Text>
+                <Text style={styles.statValue}>{userStats?.averageRating || '0.0'}</Text>
                 <Text style={styles.statLabel}>Average Rating</Text>
               </View>
               <View style={styles.statCard}>
                 <Feather name="message-square" size={32} color="#6C63FF" />
-                <Text style={styles.statValue}>{userStats.reviewsCount}</Text>
+                <Text style={styles.statValue}>{userStats?.reviewsCount || '0'}</Text>
                 <Text style={styles.statLabel}>Reviews</Text>
               </View>
               <View style={styles.statCard}>
                 <Feather name="box" size={32} color="#4CAF50" />
-                <Text style={styles.statValue}>{userStats.lentItemsCount}</Text>
+                <Text style={styles.statValue}>{userStats?.lentItemsCount || '0'}</Text>
                 <Text style={styles.statLabel}>Items Listed</Text>
               </View>
             </>
