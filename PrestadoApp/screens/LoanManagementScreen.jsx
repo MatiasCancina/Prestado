@@ -254,12 +254,14 @@ const LoanManagementScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.screenTitle}>Loan Management</Text>
-      <FlatList
-        data={loans}
-        keyExtractor={(loan) => loan.id}
-        renderItem={renderLoanItem}
-        contentContainerStyle={styles.listContainer}
-      />
+      {loans.length ? (
+        <FlatList
+          data={loans}
+          keyExtractor={(loan) => loan.id}
+          renderItem={renderLoanItem}
+          contentContainerStyle={styles.listContainer}
+        />
+      ) : (<Text style={{color: 'gray'}}>No loans yet</Text>)}
     </View>
   );
 };

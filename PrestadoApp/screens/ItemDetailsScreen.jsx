@@ -125,19 +125,21 @@ const ItemDetailsScreen = ({ route, navigation }) => {
         )}
         <Text style={styles.sectionTitle}>Description</Text>
         <Text style={styles.description}>{item.description}</Text>
-        <TouchableOpacity
-          style={styles.requestButton}
-          onPress={() =>
-            navigation.navigate("RequestLoan", {
-              itemId: item.id,
-              lenderId: item.lenderId,
-              itemName: item.name,
-            })
-          }
-        >
-          <Text style={styles.requestButtonText}>Request Loan</Text>
-          <Feather name="arrow-right" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
+        {item.availability && (
+          <TouchableOpacity
+            style={styles.requestButton}
+            onPress={() =>
+              navigation.navigate("RequestLoan", {
+                itemId: item.id,
+                lenderId: item.lenderId,
+                itemName: item.name,
+              })
+            }
+          >
+            <Text style={styles.requestButtonText}>Request Loan</Text>
+            <Feather name="arrow-right" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
       </View>
     </ScrollView>
   );
